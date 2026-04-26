@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Details</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+<body>
+
+    <nav class="navbar navbar-light bg-light">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="{% url 'onlinecourse:index' %}">Home</a>
+            </div>
+            <ul class="nav navbar-nav navbar-right">
+                {% if user.is_authenticated %}
+                <li>
+                    <span class="navbar-text mr-3">{{ user.first_name }} ({{ user.username }})</span>
+                    <a class="btn btn-outline-danger btn-sm" href="{% url 'onlinecourse:logout' %}">Logout</a>
+                </li>
+                {% else %}
+                <li>
+                    <form class="form-inline" action="{% url 'onlinecourse:login' %}" method="post">
+                        {% csrf_token %}
+                        <input type="text" class="form-control mb-2 mr-sm-2" placeholder="Username" name="username">
+                        <input type="password" class="form-control mb-2 mr-sm-2" placeholder="Password" name="password">
+                        <button type="submit" class="btn btn-primary mb-2">Login</button>
+                    </form>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h1 class="display-4 text-primary">{{ course.name }}</h1>
+        <p class="lead">{{ course.description }}</p>
+
+        <h3 class="mt-4 mb-3">Course Lessons</h3>
+        <div class="list-group mb-5">
+            {% for lesson in course.lesson_set.all %}
+            <div class="list-group-item list-group-item-action">
+                <h5 class="mb-1">{{ lesson.title }}</h5>
+                <p class="mb-1 text-muted">{{ lesson.content|truncatewords:20 }}</p>
+            </div>
+            {% empty %}
+            <p>No lessons available for this course.</p>
+            {% endfor %}
+        </div>
+
+        <div class="card bg-light p-4 shadow-sm">
+            <h4>Ready to test your knowledge?</h4>
+            <p>Complete the exam to earn your certificate.</p>
+            <button class="btn btn-success btn-lg" data-toggle="collapse" data-target="#exam_section">Start Exam</button>
+        </div>
+
+        <div id="exam_section" class="collapse mt-4">
+            <form action="{% url 'onlinecourse:submit' course.id %}" method="post">
+                {% csrf_token %}
+                {% for question in course.question_set.all %}
+                <div class="card mt-3">
+                    <div class="card-header bg-dark text-white">
+                        <h5>{{ question.question_text }} <span class="badge badge-info float-right">{{ question.grade }} Points</span></h5>
+                    </div>
+                    <div class="card-body">
+                        {% for choice in question.choice_set.all %}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" name="choice" value="{{ choice.id }}" id="choice_{{ choice.id }}">
+                            <label class="form-check-label" for="choice_{{ choice.id }}">
+                                {{ choice.choice_text }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary btn-block mt-4 mb-5">Submit Exam</button>
+            </form>
+        </div>
+    </div>
+
+</body>
+</html>
